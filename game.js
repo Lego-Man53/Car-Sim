@@ -11,9 +11,9 @@ const rightBtn = document.querySelector("#rightBtn");
 const modeButtons = [...document.querySelectorAll(".mode")];
 
 const settings = {
-  easy: { gravity: 0.34, boost: -7.4, speed: 2.45, gap: 250, spawn: 116, label: "Easy" },
-  medium: { gravity: 0.42, boost: -7.9, speed: 3.2, gap: 210, spawn: 96, label: "Medium" },
-  hard: { gravity: 0.5, boost: -8.35, speed: 4.05, gap: 174, spawn: 78, label: "Hard" },
+  easy: { speed: 2.65, spawn: 116, label: "Easy" },
+  medium: { speed: 3.45, spawn: 96, label: "Medium" },
+  hard: { speed: 4.35, spawn: 78, label: "Hard" },
 };
 
 const road = {
@@ -29,10 +29,10 @@ const laneCenters = Array.from({ length: laneCount }, (_, i) => road.left + lane
 const car = {
   lane: 1,
   x: laneCenters[1],
-  y: 430,
+  baseY: 452,
+  y: 452,
   w: 48,
   h: 76,
-  vy: 0,
 };
 
 let mode = "easy";
@@ -54,13 +54,13 @@ function reset() {
   score = 0;
   car.lane = 1;
   car.x = laneCenters[1];
-  car.y = 430;
-  car.vy = 0;
+  car.y = car.baseY;
   running = true;
   paused = false;
   gameOver = false;
   scoreEl.textContent = "0";
   startBtn.textContent = "Restart";
+  pauseBtn.textContent = "Pause";
 }
 
 function setMode(nextMode) {
@@ -71,15 +71,6 @@ function setMode(nextMode) {
     button.setAttribute("aria-checked", String(active));
   });
   reset();
-}
-
-function boost() {
-  if (!running || gameOver) {
-    reset();
-  }
-  if (!paused) {
-    car.vy = settings[mode].boost;
-  }
 }
 
 function switchLane(direction) {
@@ -118,9 +109,8 @@ function update() {
 
   const config = settings[mode];
   frame += 1;
-  car.vy += config.gravity;
-  car.y += car.vy;
   car.x += (laneCenters[car.lane] - car.x) * 0.24;
+  car.y = car.baseY + Math.sin(frame * 0.12) * 4;
 
   if (frame % config.spawn === 0) {
     spawnObstacle();
@@ -142,9 +132,7 @@ function update() {
 
   obstacles = obstacles.filter((obstacle) => obstacle.y < canvas.height + 120);
 
-  const hitCeiling = car.y < 24;
-  const hitRoad = car.y + car.h > canvas.height - 18;
-  if (hitCeiling || hitRoad || hitsTraffic()) {
+  if (hitsTraffic()) {
     gameOver = true;
     running = false;
     shake = 14;
@@ -191,7 +179,7 @@ function drawRoad() {
 function drawCar() {
   ctx.save();
   ctx.translate(car.x, car.y + car.h / 2);
-  ctx.rotate(Math.max(-0.16, Math.min(0.16, car.vy * 0.018)));
+  ctx.rotate(Math.max(-0.12, Math.min(0.12, (laneCenters[car.lane] - car.x) * 0.004)));
 
   ctx.fillStyle = "#39d98a";
   roundRect(-car.w / 2, -car.h / 2, car.w, car.h, 10);
@@ -250,13 +238,13 @@ function drawHudMessage() {
   if (gameOver) {
     ctx.fillText("Crash!", canvas.width / 2, 292);
     ctx.font = "700 18px system-ui";
-    ctx.fillText("Press Start, Space, or tap Boost", canvas.width / 2, 330);
+    ctx.fillText("Press Restart or Space to drive again", canvas.width / 2, 330);
   } else if (paused) {
     ctx.fillText("Paused", canvas.width / 2, 306);
   } else {
     ctx.fillText("Flappy Lane Racer", canvas.width / 2, 282);
     ctx.font = "700 18px system-ui";
-    ctx.fillText("Pick a lane, boost through traffic", canvas.width / 2, 322);
+    ctx.fillText("The car drives itself. Dodge traffic.", canvas.width / 2, 322);
   }
 
   ctx.font = "800 15px system-ui";
@@ -304,7 +292,7 @@ pauseBtn.addEventListener("click", () => {
   paused = !paused;
   pauseBtn.textContent = paused ? "Resume" : "Pause";
 });
-flapBtn.addEventListener("click", boost);
+flapBtn.addEventListener("click", reset);
 leftBtn.addEventListener("click", () => switchLane(-1));
 rightBtn.addEventListener("click", () => switchLane(1));
 
@@ -317,11 +305,11 @@ window.addEventListener("keydown", (event) => {
     event.preventDefault();
   }
 
-  if (event.code === "Space" || event.code === "ArrowUp") boost();
+  if (event.code === "Space" || event.code === "ArrowUp") reset();
   if (event.code === "ArrowLeft") switchLane(-1);
   if (event.code === "ArrowRight") switchLane(1);
   if (event.code === "KeyP") pauseBtn.click();
 });
 
-draw();
+reset();
 requestAnimationFrame(loop);

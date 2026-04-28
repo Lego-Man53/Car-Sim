@@ -1,6 +1,7 @@
 # Flappy Lane Racer
 
 A tiny browser game that mixes Flappy Bird timing with a three-lane car simulator.
+The car drives automatically; your job is to switch lanes and dodge traffic.
 
 ## Play
 
@@ -8,7 +9,7 @@ Open `index.html` in a browser, or host this folder with GitHub Pages.
 
 ## Controls
 
-- Space or Up Arrow: boost upward
+- Space or Up Arrow: restart after a crash
 - Left Arrow and Right Arrow: change lanes
 - On mobile: use the on-screen buttons
 
